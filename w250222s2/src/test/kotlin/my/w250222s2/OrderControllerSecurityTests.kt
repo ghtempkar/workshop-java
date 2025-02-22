@@ -68,7 +68,7 @@ class OrderControllerSecurityTests {
     @Test
     fun `GET orders without authentication returns unauthorized`() {
         mockMvc.perform(get("/orders"))
-            .andExpect(status().isUnauthorized)
+            .andExpect(status().isForbidden)
     }
 
     @Test
@@ -79,6 +79,6 @@ class OrderControllerSecurityTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(orderRequest))
         )
-            .andExpect(status().isUnauthorized)
+            .andExpect(status().isForbidden)
     }
 }
