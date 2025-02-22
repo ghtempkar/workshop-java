@@ -88,7 +88,7 @@ class OrderControllerTest {
                 .content(objectMapper.writeValueAsString(invalidOrder))
         )
             .andExpect(status().isBadRequest)
-            .andExpect(jsonPath("$.name").value("pl pl must not be blank"))
+            .andExpect(jsonPath("$.name").value("must not be blank PL XXX"))
     }
 
 }
