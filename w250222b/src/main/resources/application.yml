@@ -1,0 +1,10 @@
+spring.application.name: w250222b
+
+spring:
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+
+#spring.messages.basename=
+#spring.messages.encoding=UTF-8
+
