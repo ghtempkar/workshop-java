@@ -2,6 +2,7 @@ package my.w250222
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.springframework.context.MessageSource
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -20,7 +21,9 @@ class MyConfiguration {
 }
 
 @ControllerAdvice
-class GlobalControllerExceptionHandler {
+class GlobalControllerExceptionHandler(
+    private val messageSource: MessageSource,
+) {
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
