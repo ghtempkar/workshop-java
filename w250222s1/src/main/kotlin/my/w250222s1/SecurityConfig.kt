@@ -18,7 +18,10 @@ class SecurityConfig {
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
 
 
-        http.csrf(Customizer. withDefaults()) // Dla prostoty wyłączamy CSRF – w produkcji warto rozważyć odpowiednią konfigurację
+        http
+            .csrf { it.disable() }
+//            .csrf().disable()
+            //.csrf(Customizer. withDefaults()) // Dla prostoty wyłączamy CSRF – w produkcji warto rozważyć odpowiednią konfigurację
             .authorizeHttpRequests { requests ->
                 requests.anyRequest().authenticated()
             }
@@ -34,11 +37,16 @@ class SecurityConfig {
             .roles("USER")
             .build()
 
+        val user2 = User.withUsername("user2")
+            .password("{noop}userpassword")  // {noop} oznacza brak enkodowania – tylko dla celów demonstracyjnych
+            .roles("USER", "ADMIN")
+            .build()
+
         val admin = User.withUsername("admin")
             .password("{noop}adminpassword")
             .roles("ADMIN")
             .build()
 
-        return InMemoryUserDetailsManager(user, admin)
+        return InMemoryUserDetailsManager(user2, admin, user)
     }
 }

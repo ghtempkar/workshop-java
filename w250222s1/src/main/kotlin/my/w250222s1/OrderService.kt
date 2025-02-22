@@ -7,11 +7,11 @@ class OrderService {
     private val orders = mutableListOf<Order>()
     private var nextId = 1L
 
-    init {
-        orders.add(Order(
-            0, "Test order for get"
-        ))
-    }
+//    init {
+//        orders.add(Order(
+//            0, "Test order for get"
+//        ))
+//    }
 
     fun addOrder(order: Order): Order {
         // nadanie unikalnego identyfikatora zamówieniu

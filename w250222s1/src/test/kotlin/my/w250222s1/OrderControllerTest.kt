@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -20,10 +21,26 @@ class OrderControllerTest {
     lateinit var mockMvc: MockMvc
 
     @Test
+    fun `user2 can add order 2`() {
+        mockMvc.perform(
+            post("/orders")
+                .with(httpBasic("user2", "userpassword"))
+//                .with(csrf()) // Dodanie tokena CSRF
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"description": "Test order"}""")
+        )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").isNumber)
+            .andExpect(jsonPath("$.description").value("Test order"))
+    }
+
+
+    @Test
     fun `admin can add order`() {
         mockMvc.perform(
             post("/orders")
                 .with(httpBasic("admin", "adminpassword"))
+//                .with(csrf()) // Dodanie tokena CSRF
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"description": "Test order"}""")
         )
@@ -45,14 +62,15 @@ class OrderControllerTest {
 
     @Test
     fun `user can get orders`() {
-//        // Najpierw dodajemy zamówienie używając konta admina
-//        mockMvc.perform(
-//            post("/orders")
-//                .with(httpBasic("admin", "adminpassword"))
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content("""{"description": "Test order for get"}""")
-//        )
-//            .andExpect(status().isOk())
+        // Najpierw dodajemy zamówienie używając konta admina
+        mockMvc.perform(
+            post("/orders")
+                .with(httpBasic("admin", "adminpassword"))
+//                .with(csrf()) // Dodanie tokena CSRF
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"description": "Test order for get"}""")
+        )
+            .andExpect(status().isOk())
 
         // Następnie pobieramy zamówienia przy użyciu konta usera
         mockMvc.perform(
