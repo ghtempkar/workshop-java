@@ -1,0 +1,14 @@
+###
+
+# curl -X GET http://localhost:8080/orders -u user:userpassword
+GET http://localhost:8080/orders
+Authorization: Basic user userpassword
+
+###
+
+# curl -X GET http://localhost:8080/orders -u user:userpassword
+GET http://localhost:8080/orders
+Authorization: Basic user userpasswordXXX
+
+###
+
