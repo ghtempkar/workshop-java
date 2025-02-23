@@ -9,5 +9,4 @@ class W250223s3ApplicationTests {
     @Test
     fun contextLoads() {
     }
-
 }
