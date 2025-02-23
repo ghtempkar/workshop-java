@@ -15,13 +15,11 @@ class OrderController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     fun createOrder() {
-
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     fun listOrders() {
-
     }
 
     @PostMapping("/2")

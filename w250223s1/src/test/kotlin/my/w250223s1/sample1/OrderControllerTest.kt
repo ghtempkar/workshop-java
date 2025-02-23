@@ -107,5 +107,4 @@ class OrderControllerTest {
             }
             .andExpect(content().json("""["ROLE_ADMIN", "ROLE_USER"]""", JsonCompareMode.STRICT))
     }
-
 }

@@ -41,5 +41,4 @@ class BasicAuthSecurityConfig {
             .build()
         return InMemoryUserDetailsManager(user, admin)
     }
-
 }
