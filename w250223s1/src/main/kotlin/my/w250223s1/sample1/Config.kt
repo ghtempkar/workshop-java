@@ -1,4 +1,4 @@
-package my.w250223s1
+package my.w250223s1.sample1
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableMethodSecurity
-class SecurityConfig {
+class BasicAuthSecurityConfig {
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -29,13 +29,17 @@ class SecurityConfig {
 
     @Bean
     fun userDetailsService(): UserDetailsService {
-        // Tworzymy użytkownika z nazwą "admin", hasłem "admin" i rolą ADMIN
         val user = User.withDefaultPasswordEncoder()
+            .username("user")
+            .password("userpassword")
+            .roles("USER")
+            .build()
+        val admin = User.withDefaultPasswordEncoder()
             .username("admin")
             .password("adminpassword")
             .roles("ADMIN")
             .build()
-        return InMemoryUserDetailsManager(user)
+        return InMemoryUserDetailsManager(user, admin)
     }
 
 }
