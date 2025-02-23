@@ -13,14 +13,17 @@ class OrderController(private val orderService: OrderService) {
     @PreAuthorize("hasRole('ADMIN')")
     fun addOrder(@RequestBody order: Order): ResponseEntity<Order> {
         val savedOrder = orderService.addOrder(order)
-        return ResponseEntity.ok(savedOrder)
+        val x = ResponseEntity.ok(savedOrder)
+        return x
     }
 
     // Endpoint dostępny tylko dla roli USER – pobieranie listy zamówień
+    //    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+
     @GetMapping
-//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PreAuthorize("hasRole('USER')")
     fun getOrders(): ResponseEntity<List<Order>> {
-        return ResponseEntity.ok(orderService.getAllOrders())
+        val x = ResponseEntity.ok(orderService.getAllOrders())
+        return x
     }
 }
