@@ -1,0 +1,4 @@
+spring.application.name: w250223s1
+logging:
+  level:
+    org.springframework.security: DEBUG
