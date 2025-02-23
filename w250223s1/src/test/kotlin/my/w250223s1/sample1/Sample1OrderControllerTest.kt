@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
     ]
 )
 @Import(
-    BasicAuthSecurityConfig::class,
+    Sample1BasicAuthSecurityConfig::class,
 )
 class Sample1OrderControllerTest {
 

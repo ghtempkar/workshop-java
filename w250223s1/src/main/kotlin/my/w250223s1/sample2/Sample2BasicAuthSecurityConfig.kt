@@ -1,4 +1,4 @@
-package my.w250223s1.sample1
+package my.w250223s1.sample2
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,7 +11,7 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableMethodSecurity
-class BasicAuthSecurityConfig {
+class Sample2BasicAuthSecurityConfig {
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
