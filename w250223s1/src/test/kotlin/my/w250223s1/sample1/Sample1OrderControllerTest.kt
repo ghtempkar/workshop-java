@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @WebMvcTest(
-    controllers = [OrderController::class],
+    controllers = [Sample1OrderController::class],
     excludeAutoConfiguration = [
 //        SecurityAutoConfiguration::class,
     ]
@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @Import(
     BasicAuthSecurityConfig::class,
 )
-class OrderControllerTest {
+class Sample1OrderControllerTest {
 
     @Autowired
     lateinit var mockMvc: MockMvc

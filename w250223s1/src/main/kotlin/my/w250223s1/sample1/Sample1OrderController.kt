@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/sample1/orders")
-class OrderController {
+class Sample1OrderController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     fun createOrder() {
