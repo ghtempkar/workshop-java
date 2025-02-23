@@ -17,7 +17,7 @@ class Sample2OrderController(
 ) {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    fun createOrder(name: String): String = service.add(name)
+    fun createOrder(): String = service.add("name123")
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
