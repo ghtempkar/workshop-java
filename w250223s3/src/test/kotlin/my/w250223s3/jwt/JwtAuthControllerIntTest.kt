@@ -2,6 +2,7 @@ package my.w250223s3.jwt
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.jsonwebtoken.SignatureAlgorithm
 import java.time.Clock
 import org.hamcrest.Matchers.emptyOrNullString
 import org.hamcrest.Matchers.not
@@ -50,7 +51,7 @@ internal object JwtAuthControllerIntTestConfig {
         fun clock(): Clock = Clock.systemDefaultZone()
 
         @Bean
-        fun jwtTokenUtil(clock: Clock): JwtTokenUtil = JwtTokenUtilHS512(clock = clock)
+        fun jwtTokenCoder(): JwtTokenCoder = JwtTokenCoder.ofHS512()
 
         @Bean
         fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
@@ -97,17 +98,17 @@ internal object JwtAuthControllerIntTestConfig {
 
         @Bean
         fun jwtAuthenticationFilter(
-            jwtTokenUtil: JwtTokenUtil,
+            jwtTokenUtil: JwtTokenCoder,
             userDetailsService: UserDetailsService,
             clock: Clock
-        ): JwtAuthenticationFilter2 {
-            return JwtAuthenticationFilter2(jwtTokenUtil, FromClaimsJwtUserDetailsResolver(), clock)
+        ): JwtAuthenticationFilter {
+            return JwtAuthenticationFilter(jwtTokenUtil, FromClaimsJwtUserDetailsResolver(), clock)
         }
 
         @Bean
         fun securityFilterChain(
             http: HttpSecurity,
-            jwtAuthenticationFilter: JwtAuthenticationFilter2
+            jwtAuthenticationFilter: JwtAuthenticationFilter
         ): SecurityFilterChain {
             http.csrf { it.disable() }
                 .authorizeHttpRequests {

@@ -1,9 +1,11 @@
 package my.w250223s3
 
+import io.jsonwebtoken.SignatureAlgorithm
+import io.jsonwebtoken.security.Keys
 import java.time.Clock
 import my.w250223s3.jwt.FromClaimsJwtUserDetailsResolver
-import my.w250223s3.jwt.JwtAuthenticationFilter2
-import my.w250223s3.jwt.JwtTokenUtilRS256
+import my.w250223s3.jwt.JwtAuthenticationFilter
+import my.w250223s3.jwt.JwtTokenCoder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -22,9 +24,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableMethodSecurity
 class SecurityFilterConfig(
-    private val jwtTokenUtil: JwtTokenUtilRS256,
-    private val clock: Clock,
+
 ) {
+
+    @Bean
+    fun     clock(): Clock = Clock.systemDefaultZone()
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
@@ -63,14 +67,12 @@ class SecurityFilterConfig(
             .build()
     }
 
-    @Bean
-    fun jwtAuthenticationFilter(): JwtAuthenticationFilter2 =
-        JwtAuthenticationFilter2(jwtTokenUtil, FromClaimsJwtUserDetailsResolver(), clock)
+
 
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        jwtAuthenticationFilter: JwtAuthenticationFilter2
+        jwtAuthenticationFilter: JwtAuthenticationFilter
     ): SecurityFilterChain {
         http.csrf { it.disable() }
             .authorizeHttpRequests {

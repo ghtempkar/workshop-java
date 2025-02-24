@@ -1,5 +1,7 @@
 package my.w250223s3.jwt
 
+import java.time.Clock
+import java.time.Duration
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -15,10 +17,18 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/auth")
 class JwtAuthController(
     private val authenticationManager: AuthenticationManager,
-    private val jwtTokenUtil: JwtTokenUtil,
+    private val jwtTokenCoder: JwtTokenCoder,
 //    private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val clock: Clock,
 ) {
+
+    //    @Value("\${jwt.secret:XXXXXXXXXXXXXXX}")
+//    private lateinit var secret: String
+
+//    @Value("\${jwt.expiration:3600000}")
+//    private var expiration: Long = 3600000 // 1 godzina domyślnie
+
     data class AuthRequest(val username: String, val password: String)
     data class AuthResponse(val token: String)
 
@@ -28,7 +38,7 @@ class JwtAuthController(
             val authToken = UsernamePasswordAuthenticationToken(authRequest.username, authRequest.password)
             val authentication = authenticationManager.authenticate(authToken)
             val userDetails = authentication.principal as UserDetails
-            val token = jwtTokenUtil.generateToken(userDetails)
+            val token = jwtTokenCoder.generateToken(userDetails, clock, Duration.ofMinutes(1))
             ResponseEntity.ok(AuthResponse(token))
         } catch (ex: Exception) {
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials")

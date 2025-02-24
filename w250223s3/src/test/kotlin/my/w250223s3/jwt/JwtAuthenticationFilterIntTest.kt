@@ -1,7 +1,9 @@
 package my.w250223s3.jwt
 
 import io.jsonwebtoken.SignatureAlgorithm
+import io.jsonwebtoken.SignatureAlgorithm.HS512
 import java.time.Clock
+import java.time.Duration
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -48,7 +50,7 @@ internal object JwtTestConfig {
         fun clock(): Clock = Clock.systemDefaultZone()
 
         @Bean
-        fun jwtTokenUtil(clock: Clock): JwtTokenUtil = JwtTokenUtilHS512(clock = clock)
+        fun jwtTokenUtil(clock: Clock): JwtTokenCoder = JwtTokenCoder.ofHS512(JwtTokenCoder.generateKey(SignatureAlgorithm.HS512))
 
         @Bean
         fun userDetailsService(passwordEncoder: PasswordEncoder): InMemoryUserDetailsManager {
@@ -67,12 +69,12 @@ internal object JwtTestConfig {
         fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
         @Bean
-        fun jwtAuthenticationFilter(jwtTokenUtil: JwtTokenUtil, userDetailsService: UserDetailsService, clock: Clock): JwtAuthenticationFilter2 {
-            return JwtAuthenticationFilter2(jwtTokenUtil, FromClaimsJwtUserDetailsResolver(), clock)
+        fun jwtAuthenticationFilter(jwtTokenUtil: JwtTokenCoder, userDetailsService: UserDetailsService, clock: Clock): JwtAuthenticationFilter {
+            return JwtAuthenticationFilter(jwtTokenUtil, FromClaimsJwtUserDetailsResolver(), clock)
         }
 
         @Bean
-        fun securityFilterChain(http: HttpSecurity, jwtAuthenticationFilter: JwtAuthenticationFilter2): SecurityFilterChain {
+        fun securityFilterChain(http: HttpSecurity, jwtAuthenticationFilter: JwtAuthenticationFilter): SecurityFilterChain {
             http.csrf { it.disable() }
                 .authorizeHttpRequests {
 //                it.requestMatchers("/auth/**").permitAll() // endpointy logowania/rejestracji publiczne
@@ -103,16 +105,19 @@ internal class JwtAuthenticationFilterIntTest {
     lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var jwtTokenUtil: JwtTokenUtil
+    lateinit var jwtTokenUtil: JwtTokenCoder
 
 
 
     @Test
     fun testJwt() {
+        val clock = Clock.systemDefaultZone()
 
-
-        io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512)
-        val token = jwtTokenUtil.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ROLE_ADMIN"))))
+        val token = jwtTokenUtil.generateToken(
+            User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ROLE_ADMIN"))),
+            clock,
+            Duration.ofMinutes(1),
+        )
 //        val token = jwtTokenUtil.generateToken(User("myuser", "userpass", listOf(SimpleGrantedAuthority("USER"))))
 
         mockMvc.perform(
@@ -127,10 +132,16 @@ internal class JwtAuthenticationFilterIntTest {
     @Test
     fun testJwt3() {
 
-        val util2 = JwtTokenUtilHS512(clock = Clock.systemDefaultZone()) // diffrent secret
+        val util2 = JwtTokenCoder.ofHS512() // JwtTokenUtilHS512(clock = Clock.systemDefaultZone()) // diffrent secret
 
         io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512)
-        val token = util2.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ADMIN"))))
+
+        val clock = Clock.systemDefaultZone()
+        val token = util2.generateToken(
+            User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ADMIN"))),
+            clock,
+            Duration.ofMinutes(1),
+            )
 //        val token = jwtTokenUtil.generateToken(User("myuser", "userpass", listOf(SimpleGrantedAuthority("USER"))))
 
         mockMvc.perform(
@@ -145,11 +156,12 @@ internal class JwtAuthenticationFilterIntTest {
     @Test
 //    @WithMockUser[]
     fun testJwt2() {
-
-
-        io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512)
-//        val token = jwtTokenUtil.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ADMIN"))))
-        val token = jwtTokenUtil.generateToken(User("myuser", "userpass", listOf(SimpleGrantedAuthority("USER"))))
+        val clock = Clock.systemDefaultZone()
+        val token = jwtTokenUtil.generateToken(
+            User("myuser", "userpass", listOf(SimpleGrantedAuthority("USER"))),
+            clock,
+            Duration.ofMinutes(1),
+        )
 
         mockMvc.perform(
             get("/test")
