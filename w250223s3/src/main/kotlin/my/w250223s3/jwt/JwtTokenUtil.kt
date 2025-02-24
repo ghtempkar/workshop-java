@@ -1,22 +1,29 @@
-package my.w250223s3
+package my.w250223s3.jwt
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
-import io.jsonwebtoken.security.Keys
-import java.util.Date
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.stereotype.Component
+import java.security.KeyPair
+import java.util.Date
 
-class JwtTokenUtil2: JwtTokenUtilInt {
-//    @Value("\${jwt.secret:XXXXXXXXXXXXXXX}")
-//    private lateinit var secret: String
+interface JwtTokenUtilInt {
+    fun generateToken(userDetails: UserDetails): String
 
-    @Value("\${jwt.expiration:3600000}")
-    private var expiration: Long = 3600000 // 1 godzina domyślnie
+    fun getUsernameFromToken(token: String): String?
 
+    fun getClaimsFromToken(token: String): Claims?
 
+    fun validateToken(token: String, userDetails: UserDetails): Boolean
+}
 
+@Component
+class JwtTokenUtil(
+    private val keyPair: KeyPair,
+    @Value("\${jwt.expiration}") private val expiration: Long
+): JwtTokenUtilInt {
     override fun generateToken(userDetails: UserDetails): String {
         val claims: Map<String, Any> = mapOf("roles" to userDetails.authorities.map { it.authority })
         return Jwts.builder()
@@ -24,8 +31,7 @@ class JwtTokenUtil2: JwtTokenUtilInt {
             .setSubject(userDetails.username)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + expiration))
-            .signWith(secret2)
-//            .signWith(SignatureAlgorithm.HS512, secret)
+            .signWith(keyPair.private, SignatureAlgorithm.RS256)
             .compact()
     }
 
@@ -39,19 +45,19 @@ class JwtTokenUtil2: JwtTokenUtilInt {
     }
 
     private fun isTokenExpired(token: String): Boolean {
-        val expiration = getClaimsFromToken(token)?.expiration
-        return expiration?.before(Date()) ?: true
+        val expirationDate = getClaimsFromToken(token)?.expiration
+        return expirationDate?.before(Date()) ?: true
     }
 
-    private fun getClaimsFromToken(token: String): Claims? {
+    override fun getClaimsFromToken(token: String): Claims? {
         return try {
-            Jwts.parser().setSigningKey(secret2).parseClaimsJws(token).body
+            Jwts.parserBuilder()
+                .setSigningKey(keyPair.public)
+                .build()
+                .parseClaimsJws(token)
+                .body
         } catch (e: Exception) {
             null
         }
-    }
-
-    companion object {
-        private val secret2 = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 }

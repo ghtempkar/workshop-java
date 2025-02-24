@@ -1,4 +1,4 @@
-package my.w250223s3
+package my.w250223s3.jwt
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
