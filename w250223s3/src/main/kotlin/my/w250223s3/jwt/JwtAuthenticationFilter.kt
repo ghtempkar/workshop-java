@@ -67,14 +67,15 @@ open class JwtAuthenticationFilter2(
             val token = header.substring(BearerPrefixLen)
 //            val username = jwtTokenUtil.getUsernameFromToken(token)
 
-            val claim = jwtTokenUtil.getClaimsFromToken(token)
-            if (claim != null && SecurityContextHolder.getContext().authentication == null) {
+            val claims = jwtTokenUtil.getClaimsFromToken(token)
+            if (claims != null && SecurityContextHolder.getContext().authentication == null) {
 //                val subject = claim.subject
 //                val claimToUserDetails: (Claims) -> UserDetails?
 
-                val userDetails = jwtUserDetailsResolver.resolve(claim)
+                val userDetails = jwtUserDetailsResolver.resolve(claims)
                 if (userDetails != null) {
                     val auth = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+//                    val auth = JwtAuthenticationToken(userDetails, null, userDetails.authorities)
                     SecurityContextHolder.getContext().authentication = auth
                 }
             }

@@ -1,5 +1,6 @@
 package my.w250223s3.jwt
 
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.SignatureAlgorithm
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -63,12 +65,16 @@ internal object JwtTestConfig {
         fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
         @Bean
-        fun jwtAuthenticationFilter(jwtTokenUtil: JwtTokenUtilInt , userDetailsService: UserDetailsService): JwtAuthenticationFilter {
-            return JwtAuthenticationFilter(jwtTokenUtil, userDetailsService)
+        fun jwtAuthenticationFilter(jwtTokenUtil: JwtTokenUtilInt , userDetailsService: UserDetailsService): JwtAuthenticationFilter2 {
+            return JwtAuthenticationFilter2(jwtTokenUtil, object : JwtUserDetailsResolver {
+                override fun resolve(claims: Claims): UserDetails? {
+                    return userDetailsFromUserDetailsService(userDetailsService, claims)
+                }
+            })
         }
 
         @Bean
-        fun securityFilterChain(http: HttpSecurity, jwtAuthenticationFilter: JwtAuthenticationFilter): SecurityFilterChain {
+        fun securityFilterChain(http: HttpSecurity, jwtAuthenticationFilter: JwtAuthenticationFilter2): SecurityFilterChain {
             http.csrf { it.disable() }
                 .authorizeHttpRequests {
 //                it.requestMatchers("/auth/**").permitAll() // endpointy logowania/rejestracji publiczne
@@ -121,7 +127,7 @@ internal class JwtAuthenticationFilterIntTest {
     @Test
     fun testJwt3() {
 
-        val util2 = JwtTokenUtil2()
+        val util2 = JwtTokenUtil2() // diffrent secret
 
         io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512)
         val token = util2.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ADMIN"))))
@@ -132,8 +138,8 @@ internal class JwtAuthenticationFilterIntTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer $token")
         )
-            .andExpect(status().isOk)
-            .andExpect { content().string("ok") }
+            .andExpect(status().isForbidden)
+//            .andExpect { content().string("ok") }
     }
 
     @Test
