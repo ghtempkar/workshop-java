@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import java.time.Clock
+import java.util.Date
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
@@ -12,83 +14,100 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.web.filter.OncePerRequestFilter
 
-open class JwtAuthenticationFilter(
-    private val jwtTokenUtil: JwtTokenUtilInt,
-    private val userDetailsService: UserDetailsService,
-) : OncePerRequestFilter() {
-    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        val header = request.getHeader("Authorization")
-        if (header != null && header.startsWith("Bearer ")) {
-            val token = header.substring(7)
-            val username = jwtTokenUtil.getUsernameFromToken(token)
-            if (username != null && SecurityContextHolder.getContext().authentication == null) {
-                val userDetails = userDetailsService.loadUserByUsername(username)
-                if (jwtTokenUtil.validateToken(token, userDetails)) {
-                    val auth = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
-                    SecurityContextHolder.getContext().authentication = auth
-                }
-            }
-        }
-        filterChain.doFilter(request, response)
-    }
-}
-
 interface JwtUserDetailsResolver {
     fun resolve(claims: Claims): UserDetails?
-}
 
-fun userDetailsFromClaims(claims: Claims): UserDetails? {
-    val authorities = when(val auth = claims["authorities"]) {
-        is List<*> -> auth.map { it.toString() }
-        else -> emptyList()
+    companion object {
+        fun fromService(userDetailsService: UserDetailsService): FromServiceJwtUserDetailsResolver =
+            FromServiceJwtUserDetailsResolver(userDetailsService)
+
+        fun fromClaims(): FromClaimsJwtUserDetailsResolver =
+            FromClaimsJwtUserDetailsResolver()
     }
-//    val roles = (claims.get("roles") as? List<String>) //?.let { it as String }?.split(",")
-
-    // authorities
-
-    return User(claims.subject, "", authorities.map { SimpleGrantedAuthority(it) })
 }
 
-fun userDetailsFromUserDetailsService(userDetailsService: UserDetailsService, claims: Claims): UserDetails? {
-    val username = claims.subject
+class FromServiceJwtUserDetailsResolver(
+    private val userDetailsService: UserDetailsService,
+) : JwtUserDetailsResolver {
+    override fun resolve(claims: Claims): UserDetails? {
+        return userDetailsFromUserDetailsService(userDetailsService, claims)
+    }
 
-    val userDetails = userDetailsService.loadUserByUsername(username)
+    companion object {
+        fun userDetailsFromUserDetailsService(userDetailsService: UserDetailsService, claims: Claims): UserDetails? {
+            val userDetails = userDetailsService.loadUserByUsername(claims.subject)
+            return userDetails
+        }
+    }
+}
 
-    return userDetails
+class FromClaimsJwtUserDetailsResolver : JwtUserDetailsResolver {
+    override fun resolve(claims: Claims): UserDetails? {
+        return userDetailsFromClaims(claims)
+    }
+
+    companion object {
+        fun userDetailsFromClaims(claims: Claims): UserDetails? {
+            val authorities = when (val auth = claims["authorities"]) {
+                is List<*> -> auth.map { it.toString() } // todo:
+                else -> emptyList()
+            }
+
+            return User(claims.subject, "", authorities.map { SimpleGrantedAuthority(it) })
+        }
+    }
 }
 
 open class JwtAuthenticationFilter2(
-    private val jwtTokenUtil: JwtTokenUtilInt,
+    private val jwtTokenUtil: JwtTokenUtil,
     private val jwtUserDetailsResolver: JwtUserDetailsResolver,
+    private val clock: Clock,
 ) : OncePerRequestFilter() {
-    override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        val header = request.getHeader(Authorization)
-        if (header != null && header.startsWith(BearerPrefix)) {
-            val token = header.substring(BearerPrefixLen)
-//            val username = jwtTokenUtil.getUsernameFromToken(token)
-
-            val claims = jwtTokenUtil.getClaimsFromToken(token)
-            if (claims != null && SecurityContextHolder.getContext().authentication == null) {
-//                val subject = claim.subject
-//                val claimToUserDetails: (Claims) -> UserDetails?
-
-                val userDetails = jwtUserDetailsResolver.resolve(claims)
-                if (userDetails != null) {
-                    val auth = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
-//                    val auth = JwtAuthenticationToken(userDetails, null, userDetails.authorities)
-                    SecurityContextHolder.getContext().authentication = auth
-                }
-            }
-
-//            if (username != null && SecurityContextHolder.getContext().authentication == null) {
-//                val userDetails = userDetailsService.loadUserByUsername(username)
-//                if (jwtTokenUtil.validateToken(token, userDetails)) {
-//                    val auth = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
-//                    SecurityContextHolder.getContext().authentication = auth
-//                }
-//            }
-        }
+    override fun doFilterInternal(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        filterChain: FilterChain
+    ) {
+        initializeSecurityContext(request)
         filterChain.doFilter(request, response)
+    }
+
+    private fun initializeSecurityContext(request: HttpServletRequest) {
+        if (SecurityContextHolder.getContext().authentication != null) {
+            return
+        }
+
+        val header = request.getHeader(Authorization)
+        if (header == null || !header.startsWith(BearerPrefix)) {
+            return
+        }
+
+        val token = header.substring(BearerPrefixLen)
+        val claims = try {
+            jwtTokenUtil.getClaimsFromToken(token)
+        } catch (ex: Exception) {
+            logger.info("unable to parse token: ${ex.message}", ex)
+            return
+        }
+
+        if (isTokenExpired(claims)) {
+            logger.info("token expired")
+            return
+        }
+
+        val userDetails = jwtUserDetailsResolver.resolve(claims)
+        if (userDetails == null) {
+            logger.info("unable to resolve user: ${claims.subject}")
+            return
+        }
+
+        val auth = UsernamePasswordAuthenticationToken(userDetails, null, userDetails.authorities)
+        SecurityContextHolder.getContext().authentication = auth
+    }
+
+    private fun isTokenExpired(claims: Claims): Boolean {
+        val expirationDate = claims.expiration
+        return expirationDate?.before(Date.from(clock.instant())) ?: true
     }
 
     companion object {

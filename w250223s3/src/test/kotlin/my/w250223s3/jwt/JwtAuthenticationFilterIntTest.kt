@@ -1,7 +1,7 @@
 package my.w250223s3.jwt
 
-import io.jsonwebtoken.Claims
 import io.jsonwebtoken.SignatureAlgorithm
+import java.time.Clock
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
@@ -16,7 +16,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -46,7 +45,10 @@ internal object JwtTestConfig {
     ) {
 
         @Bean
-        fun jwtTokenUtil(): JwtTokenUtilInt = JwtTokenUtil2()
+        fun clock(): Clock = Clock.systemDefaultZone()
+
+        @Bean
+        fun jwtTokenUtil(clock: Clock): JwtTokenUtil = JwtTokenUtilHS512(clock = clock)
 
         @Bean
         fun userDetailsService(passwordEncoder: PasswordEncoder): InMemoryUserDetailsManager {
@@ -65,12 +67,8 @@ internal object JwtTestConfig {
         fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
         @Bean
-        fun jwtAuthenticationFilter(jwtTokenUtil: JwtTokenUtilInt , userDetailsService: UserDetailsService): JwtAuthenticationFilter2 {
-            return JwtAuthenticationFilter2(jwtTokenUtil, object : JwtUserDetailsResolver {
-                override fun resolve(claims: Claims): UserDetails? {
-                    return userDetailsFromUserDetailsService(userDetailsService, claims)
-                }
-            })
+        fun jwtAuthenticationFilter(jwtTokenUtil: JwtTokenUtil, userDetailsService: UserDetailsService, clock: Clock): JwtAuthenticationFilter2 {
+            return JwtAuthenticationFilter2(jwtTokenUtil, FromClaimsJwtUserDetailsResolver(), clock)
         }
 
         @Bean
@@ -105,14 +103,16 @@ internal class JwtAuthenticationFilterIntTest {
     lateinit var mockMvc: MockMvc
 
     @Autowired
-    lateinit var jwtTokenUtil: JwtTokenUtilInt
+    lateinit var jwtTokenUtil: JwtTokenUtil
+
+
 
     @Test
     fun testJwt() {
 
 
         io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512)
-        val token = jwtTokenUtil.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ADMIN"))))
+        val token = jwtTokenUtil.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ROLE_ADMIN"))))
 //        val token = jwtTokenUtil.generateToken(User("myuser", "userpass", listOf(SimpleGrantedAuthority("USER"))))
 
         mockMvc.perform(
@@ -127,7 +127,7 @@ internal class JwtAuthenticationFilterIntTest {
     @Test
     fun testJwt3() {
 
-        val util2 = JwtTokenUtil2() // diffrent secret
+        val util2 = JwtTokenUtilHS512(clock = Clock.systemDefaultZone()) // diffrent secret
 
         io.jsonwebtoken.security.Keys.secretKeyFor(SignatureAlgorithm.HS512)
         val token = util2.generateToken(User("myadmin", "adminpass", listOf(SimpleGrantedAuthority("ADMIN"))))
