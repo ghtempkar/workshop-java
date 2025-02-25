@@ -1,0 +1,7 @@
+spring.application.name: w250223s3
+
+logging:
+  level:
+    org.springframework.security: TRACE
+
+

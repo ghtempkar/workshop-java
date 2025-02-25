@@ -23,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.access.intercept.AuthorizationFilter
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -83,7 +84,8 @@ internal object JwtTestConfig {
                 .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
                 .addFilterBefore(
                     jwtAuthenticationFilter,
-                    UsernamePasswordAuthenticationFilter::class.java
+                    UsernamePasswordAuthenticationFilter::class.java,
+//                    AuthorizationFilter::class.java,
                 )
             return http.build()
         }
