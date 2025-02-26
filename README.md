@@ -33,3 +33,9 @@
 
 - jdbc postgres
 - test containers
+
+## w250226s2
+
+- jdbc postgres
+- test containers
+- flyway

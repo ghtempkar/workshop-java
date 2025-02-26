@@ -1,0 +1,5 @@
+spring.application.name: w250226s3
+spring:
+  docker:
+    compose:
+      file: ./w250226s3/compose.yaml
