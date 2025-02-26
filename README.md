@@ -29,3 +29,7 @@
 - jdbc m2
 - @JdbcTest , @Sql
 
+## w250226s2
+
+- jdbc postgres
+- test containers

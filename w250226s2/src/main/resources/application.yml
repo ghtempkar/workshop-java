@@ -1,0 +1,14 @@
+spring.application.name: w250226s2
+spring:
+  docker:
+    compose:
+      file: ./w250226s2/compose.yaml
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders_db
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always # Automatyczne ?adowanie schematu SQL
