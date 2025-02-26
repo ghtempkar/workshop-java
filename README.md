@@ -23,3 +23,9 @@
 ## w250224s2
 
 - MFA
+
+## w250226s1
+
+- jdbc m2
+- @JdbcTest , @Sql
+
