@@ -1,0 +1,12 @@
+spring.application.name: w250226s4
+
+spring:
+  datasource:
+    primary:
+      url: jdbc:postgresql://localhost:5432/mydatabase
+      name: myuser
+      password: mypassword
+      driver-class-name: org.postgresql.Driver
+  docker:
+    compose:
+      file: ./w250226s4/compose.yaml
