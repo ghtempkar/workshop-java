@@ -1,2 +1,5 @@
 .idea
 *.iml
+test-application-secret.yaml
+test-application-secret.yml
+
