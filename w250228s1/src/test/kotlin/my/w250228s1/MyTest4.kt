@@ -1,54 +1,45 @@
 package my.w250228s1
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import io.netty.channel.ChannelOption
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.io.support.DefaultPropertySourceFactory
-import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.test.context.TestPropertySource
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.netty.http.client.HttpClient
 
+@SpringBootTest
 @TestPropertySource(
     value = ["classpath:test-application.yaml", "classpath:test-application-secret.yaml"],
     factory = DefaultPropertySourceFactory::class,
 )
-@SpringBootTest
-class MyTest3 {
+class MyTest4 {
 
     @Value("\${application.hubspot.url}")
-    lateinit var baseUrl: String
+    lateinit var url: String
 
     @Value("\${application.hubspot.token}")
     lateinit var apiToken: String
 
     @Test
-    fun test3() {
-        val httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+    fun test4() {
+        val companyId = "6479836625"
 
         val client = WebClient.builder()
-//            .clientConnector(ReactorClientHttpConnector(httpClient))
-            .baseUrl(baseUrl)
-            .defaultHeaders {
-                it.add("Authorization", "Bearer $apiToken")
-            }.build()
+            .baseUrl(url)
+            .defaultHeaders { headers -> headers.add("Authorization", "Bearer $apiToken") }
+            .build()
 
         val result = client.get()
             .uri { builder ->
                 builder
-                    .path("/crm/v3/objects/companies")
-                    .queryParam("properties", "nip,name")
+                    .path("/crm/v3/associations/companies/${companyId}/deals")
+                    .queryParam("limit", 100)
                     .build()
             }
             .retrieve()
             .bodyToMono(String::class.java)
             .block()!!
 
-//        println(result)
         println(prettyPrintJson(result))
     }
-
 }
