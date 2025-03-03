@@ -19,7 +19,7 @@ import kotlin.system.measureTimeMillis
 
 @Service
 internal class MyService {
-    @Cacheable("cache-1")
+    @Cacheable("cache-1", key = "'my-timestamp-1'")
     fun myTimestamp1(): String {
         Thread.sleep(500)
         return Instant.now().toString()
@@ -29,6 +29,12 @@ internal class MyService {
     fun myTimestamp2(): String {
         Thread.sleep(500)
         return Instant.now().toString()
+    }
+
+    @Cacheable("cache-1", key = "'my-value-3'")
+    fun myValue3(value: String): String {
+        Thread.sleep(500)
+        return value
     }
 }
 
@@ -80,6 +86,29 @@ internal class MyTest(
         assertThatThrownBy {
             myService.myTimestamp2()
         }.hasMessageContaining("cache-2")
+    }
+
+    @Test
+    fun `test cache-1 values`(@Autowired cacheManager: CacheManager) {
+        val cache = requireNotNull(cacheManager.getCache("cache-1")).also { it.clear() }
+
+        assertThat(cache.get("my-timestamp-1")).isNull()
+
+        println(measureTimeMillis { println(myService.myTimestamp1()) })
+
+        assertThat(cache.get("my-timestamp-1")).isNotNull()
+    }
+
+    @Test
+    fun `test cache-1 my-value-3`(@Autowired cacheManager: CacheManager) {
+        val cache = requireNotNull(cacheManager.getCache("cache-1")).also { it.clear() }
+
+        assertThat(cache.get("my-value-3")).isNull()
+
+        println(measureTimeMillis { println(myService.myValue3("AAA")) })
+
+        assertThat(cache.get("my-value-3")).isNotNull()
+        assertThat(cache.get("my-value-3")?.get()).isEqualTo("AAA")
     }
 
     @Configuration
