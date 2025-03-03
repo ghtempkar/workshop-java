@@ -2,6 +2,12 @@
 
 - implementation("org.springframework.boot:spring-boot-starter-cache")
 - @EnableCaching @Cacheable
+- `@Cacheable("cache-1", key = "'my-timestamp-1'")`
+- `@Cacheable("cache-1", key = "'my-order4-' + #id")`
+- `@Cacheable("cache-1", key = "'my-status5-' + #myUser.id")`
+- `@Cacheable("cache-1", key = "#root.methodName + '-' + #myUser.id")`
+- `@Cacheable("cache-1", key = "'text7'", unless = "#result == null")`
+- `ConcurrentMapCacheManager()`
 
 ## w250222s1
 

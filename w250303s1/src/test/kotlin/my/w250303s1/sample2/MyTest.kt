@@ -15,11 +15,27 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.stereotype.Service
+import java.time.Duration
 import java.time.Instant
 import kotlin.system.measureTimeMillis
 
 @Service
-internal class MyService {
+internal class MySlowService(
+    var text: String? = null
+) {
+    fun getValue(value: String?, delay: Duration): String? {
+        Thread.sleep(delay)
+        return value
+    }
+
+    fun getText(delay: Duration): String? {
+        Thread.sleep(delay)
+        return text
+    }
+}
+
+@Service
+internal class MyService(private val mySlowService: MySlowService) {
     @Cacheable("cache-1", key = "'my-timestamp-1'")
     fun myTimestamp1(): String {
         Thread.sleep(500)
@@ -56,11 +72,19 @@ internal class MyService {
     fun myStatus6(myUser: MyUser): String {
         return "my-status6-value-${myUser.id}"
     }
+
+    @Cacheable("cache-1", key = "'text7'", unless = "#result == null")
+    fun myText7(): String? {
+        return mySlowService.getText(Duration.ofMillis(100))
+    }
 }
 
 @Configuration
 @EnableCaching
-@Import(MyService::class)
+@Import(
+    MySlowService::class,
+    MyService::class
+)
 internal class MyConfig {
     @Bean
     fun cacheManager(): CacheManager {
@@ -171,6 +195,26 @@ internal class MyTest(
 
         assertThat(cache.get("myStatus6-50")?.get()).isEqualTo("my-status6-value-50")
         assertThat(cache.get("myStatus6-70")?.get()).isEqualTo("my-status6-value-70")
+    }
+
+    @Test
+    fun `test cache-1 text7`(
+        @Autowired cacheManager: CacheManager,
+        @Autowired mySlowService: MySlowService
+    ) {
+        val cache = requireNotNull(cacheManager.getCache("cache-1")).also { it.clear() }
+
+        assertThat(cache.get("text7")).isNull()
+        assertThat(myService.myText7()).isNull()
+        assertThat(cache.get("text7")).isNull()
+
+        mySlowService.text = "AAA"
+        assertThat(myService.myText7()).isEqualTo("AAA")
+        assertThat(cache.get("text7")?.get()).isEqualTo("AAA")
+
+        mySlowService.text = "BBB"
+        assertThat(myService.myText7()).isEqualTo("AAA")
+        assertThat(cache.get("text7")?.get()).isEqualTo("AAA")
     }
 
     @Configuration
