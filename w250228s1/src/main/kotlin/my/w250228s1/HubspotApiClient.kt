@@ -85,6 +85,23 @@ class HubspotApiClient(private val webClient: WebClient) {
         return result
     }
 
+    fun getCompanies(after: String? = null): String {
+//        val objectMapper = jacksonObjectMapper()
+//            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        return webClient.get(
+            "/crm/v3/objects/companies",
+            uriBuilderBlock = {
+                queryParam("limit", "100")
+//                queryParam("sort", "createdAt")
+//                after?.let { queryParam("after", it) }
+            }
+        )
+//            .let {
+//            objectMapper.readValue(it, HubSpotProductsResponse::class.java)
+//        }
+    }
+
+
     fun getLineItem(lineItemId: String): String {
         val result = webClient.get(
             "/crm/v3/objects/line_items/${lineItemId}",
