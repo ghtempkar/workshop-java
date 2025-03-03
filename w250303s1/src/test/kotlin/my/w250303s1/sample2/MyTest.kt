@@ -1,5 +1,6 @@
 package my.w250303s1.sample2
 
+import my.w250303s1.sample2.MyService.MyUser
 import my.w250303s1.sample2.MyTest.IntTestConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -40,6 +41,15 @@ internal class MyService {
     @Cacheable("cache-1", key = "'my-order4-' + #id")
     fun myOrder4(id: Int): String {
         return "my-order4-value-$id"
+    }
+
+    data class MyUser(
+        val id: Int
+    )
+
+    @Cacheable("cache-1", key = "'my-status5-' + #myUser.id")
+    fun myStatus5(myUser: MyUser): String {
+        return "my-status5-value-${myUser.id}"
     }
 }
 
@@ -128,6 +138,20 @@ internal class MyTest(
 
         assertThat(cache.get("my-order4-100")?.get()).isEqualTo("my-order4-value-100")
         assertThat(cache.get("my-order4-102")?.get()).isEqualTo("my-order4-value-102")
+    }
+
+    @Test
+    fun `test cache-1 my-status5`(@Autowired cacheManager: CacheManager) {
+        val cache = requireNotNull(cacheManager.getCache("cache-1")).also { it.clear() }
+
+        assertThat(cache.get("my-status5-50")).isNull()
+        assertThat(cache.get("my-status5-70")).isNull()
+
+        myService.myStatus5(MyUser(50))
+        myService.myStatus5(MyUser(70))
+
+        assertThat(cache.get("my-status5-50")?.get()).isEqualTo("my-status5-value-50")
+        assertThat(cache.get("my-status5-70")?.get()).isEqualTo("my-status5-value-70")
     }
 
     @Configuration
