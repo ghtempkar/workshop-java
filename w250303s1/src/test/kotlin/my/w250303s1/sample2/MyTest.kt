@@ -51,6 +51,11 @@ internal class MyService {
     fun myStatus5(myUser: MyUser): String {
         return "my-status5-value-${myUser.id}"
     }
+
+    @Cacheable("cache-1", key = "#root.methodName + '-' + #myUser.id")
+    fun myStatus6(myUser: MyUser): String {
+        return "my-status6-value-${myUser.id}"
+    }
 }
 
 @Configuration
@@ -152,6 +157,20 @@ internal class MyTest(
 
         assertThat(cache.get("my-status5-50")?.get()).isEqualTo("my-status5-value-50")
         assertThat(cache.get("my-status5-70")?.get()).isEqualTo("my-status5-value-70")
+    }
+
+    @Test
+    fun `test cache-1 my-status6`(@Autowired cacheManager: CacheManager) {
+        val cache = requireNotNull(cacheManager.getCache("cache-1")).also { it.clear() }
+
+        assertThat(cache.get("myStatus6-50")).isNull()
+        assertThat(cache.get("myStatus6-70")).isNull()
+
+        myService.myStatus6(MyUser(50))
+        myService.myStatus6(MyUser(70))
+
+        assertThat(cache.get("myStatus6-50")?.get()).isEqualTo("my-status6-value-50")
+        assertThat(cache.get("myStatus6-70")?.get()).isEqualTo("my-status6-value-70")
     }
 
     @Configuration
