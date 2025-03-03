@@ -9,6 +9,12 @@
 - `@Cacheable("cache-1", key = "'text7'", unless = "#result == null")`
 - `ConcurrentMapCacheManager()`
 
+## w250303s2
+
+- `implementation("com.github.ben-manes.caffeine:caffeine:3.1.6")`
+- `CaffeineCacheManager` , `.expireAfterWrite()` , `.ticker()`
+- `MutableClock`
+
 ## w250222s1
 
 ## w250222s2

@@ -1,7 +1,6 @@
-package my.w250303s2.sample1
+package my.w250303s2.sample2
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import my.w250303s2.sample1.MyTest.IntTestConfig
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -14,6 +13,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.stereotype.Service
 import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -32,6 +33,20 @@ internal class MyService {
     }
 }
 
+class MutableClock(private var instant: Instant, private val zoneId: ZoneId) : Clock() {
+    override fun getZone(): ZoneId = zoneId
+    override fun withZone(zone: ZoneId): Clock = MutableClock(instant, zone)
+    override fun instant(): Instant = instant
+
+    fun setTime(newInstant: Instant) {
+        instant = newInstant
+    }
+
+    fun advanceBySeconds(seconds: Long) {
+        instant = instant.plusSeconds(seconds)
+    }
+}
+
 @Configuration
 @EnableCaching
 @Import(
@@ -39,20 +54,24 @@ internal class MyService {
 )
 internal class MyTestConfig {
     @Bean
-    fun cacheManager(): CacheManager {
+    fun clock(): MutableClock {
+        return MutableClock(Instant.now(), ZoneId.systemDefault())
+    }
+
+    @Bean
+    fun cacheManager(clock: Clock): CacheManager {
         val cacheManager = CaffeineCacheManager("my-cache")
         cacheManager.setCaffeine(
-            Caffeine.newBuilder().expireAfterWrite(1L, TimeUnit.SECONDS)
+            Caffeine.newBuilder()
+                .expireAfterWrite(5L, TimeUnit.SECONDS)
+                .ticker { clock.millis() * 1_000_000 }
         )
 
         return cacheManager
     }
-
-    @Bean
-    fun clock(): Clock = Clock.systemDefaultZone()
 }
 
-@SpringBootTest(classes = [IntTestConfig::class])
+@SpringBootTest(classes = [MyTest.IntTestConfig::class])
 @Import(MyTestConfig::class)
 internal class MyTest {
 
@@ -61,7 +80,10 @@ internal class MyTest {
     }
 
     @Test
-    fun `simple test 1`(@Autowired myService: MyService) {
+    fun `simple test 1`(
+        @Autowired myService: MyService,
+        @Autowired clock: MutableClock
+    ) {
         measureTimeMillis {
             myService.getValue(10)
         }.let { println(it) }
@@ -70,7 +92,7 @@ internal class MyTest {
             myService.getValue(10)
         }.let { println(it) }
 
-        Thread.sleep(2_000)
+        clock.advanceBySeconds(6)
 
         measureTimeMillis {
             myService.getValue(10)
