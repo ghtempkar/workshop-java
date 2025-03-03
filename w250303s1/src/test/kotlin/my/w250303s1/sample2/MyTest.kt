@@ -36,6 +36,11 @@ internal class MyService {
         Thread.sleep(500)
         return value
     }
+
+    @Cacheable("cache-1", key = "'my-order4-' + #id")
+    fun myOrder4(id: Int): String {
+        return "my-order4-value-$id"
+    }
 }
 
 @Configuration
@@ -109,6 +114,20 @@ internal class MyTest(
 
         assertThat(cache.get("my-value-3")).isNotNull()
         assertThat(cache.get("my-value-3")?.get()).isEqualTo("AAA")
+    }
+
+    @Test
+    fun `test cache-1 my-order4`(@Autowired cacheManager: CacheManager) {
+        val cache = requireNotNull(cacheManager.getCache("cache-1")).also { it.clear() }
+
+        assertThat(cache.get("my-order4-100")).isNull()
+        assertThat(cache.get("my-order4-102")).isNull()
+
+        myService.myOrder4(100)
+        myService.myOrder4(102)
+
+        assertThat(cache.get("my-order4-100")?.get()).isEqualTo("my-order4-value-100")
+        assertThat(cache.get("my-order4-102")?.get()).isEqualTo("my-order4-value-102")
     }
 
     @Configuration
