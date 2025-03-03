@@ -12,12 +12,12 @@ internal class MyServiceTest(
     @Test
     fun test1() {
         measureTimeMillis {
-            println(myService.myFun1())
+            println(myService.myTimestampNow())
         }.also {
             println(it)
         }
         measureTimeMillis {
-            println(myService.myFun1())
+            println(myService.myTimestampNow())
         }.also {
             println(it)
         }

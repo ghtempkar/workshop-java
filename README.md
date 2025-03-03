@@ -1,4 +1,7 @@
-# w250222
+## w250303s1
+
+- implementation("org.springframework.boot:spring-boot-starter-cache")
+- @EnableCaching @Cacheable
 
 ## w250222s1
 
