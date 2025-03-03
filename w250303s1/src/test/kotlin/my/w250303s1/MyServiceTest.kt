@@ -1,16 +1,17 @@
 package my.w250303s1
 
-import kotlin.system.measureTimeMillis
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.cache.CacheManager
+import kotlin.system.measureTimeMillis
 
 @SpringBootTest
 internal class MyServiceTest(
-    @Autowired val myService: MyService,
+    @Autowired val myService: MyService
 ) {
     @Test
-    fun test1() {
+    fun cache1test(@Autowired cacheManager: CacheManager) {
         measureTimeMillis {
             println(myService.myTimestampNow())
         }.also {
