@@ -1,0 +1,9 @@
+services:
+  temp-postgres:
+    image: 'postgres:17.4'
+    environment:
+      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_PASSWORD=mypassword'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - '5432:5432'

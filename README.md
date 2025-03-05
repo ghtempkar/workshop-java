@@ -1,3 +1,7 @@
+## w250305s1
+
+- jdbc CrudRepository
+
 ## w250303s4
 
 - thymeleaf, htmx
