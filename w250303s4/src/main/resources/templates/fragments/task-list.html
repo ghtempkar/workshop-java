@@ -1,0 +1,13 @@
+<div id="task-list" th:fragment="task-list">
+    <ul class="list-group">
+        <li th:each="task : ${tasks}" class="list-group-item d-flex justify-content-between align-items-center">
+            <span th:text="${task.description}"></span>
+            <button class="btn btn-danger btn-sm"
+                    th:hx-post="@{/delete/{id}(id=${task.id})}"
+                    hx-target="#task-list"
+                    hx-swap="outerHTML">
+                Usuń
+            </button>
+        </li>
+    </ul>
+</div>
