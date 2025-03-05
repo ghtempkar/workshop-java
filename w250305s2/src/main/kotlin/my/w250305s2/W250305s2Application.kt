@@ -1,7 +1,6 @@
 package my.w250305s2
 
 import javax.sql.DataSource
-import my.w250305s2.source1.MyEntity1
 import my.w250305s2.source1.Source1Repo
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.CommandLineRunner
@@ -29,21 +28,14 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
 import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.TransactionManager
-
-//@Configuration
-//class MyJdbcConfig : org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration() {
-//
-//
-//}
 
 @Configuration
 @EnableJdbcRepositories(
     includeFilters = [ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = [Source1Repo::class])],
 //    basePackageClasses = [MyEntity1::class],
-    jdbcOperationsRef = "qualifierJdbcOperations",
+    jdbcOperationsRef = "dataSource1JdbcOperations",
     dataAccessStrategyRef = "dataSource1DataAccessStrategy",
-    transactionManagerRef = "ds1transactionManager",
+    transactionManagerRef = "dataSource1TransactionManager",
 
 )
 class MyDataSource1: AbstractJdbcConfiguration() {
@@ -51,7 +43,7 @@ class MyDataSource1: AbstractJdbcConfiguration() {
     @Bean("dataSource1DataAccessStrategy")
     @Qualifier("dataSource1")
     override fun dataAccessStrategyBean(
-        @Qualifier("qualifierJdbcOperations")operations: NamedParameterJdbcOperations,
+        @Qualifier("dataSource1")operations: NamedParameterJdbcOperations,
         @Qualifier("dataSource1") jdbcConverter: JdbcConverter,
         context: JdbcMappingContext,
         @Qualifier("dataSource1")dialect: Dialect
@@ -63,7 +55,7 @@ class MyDataSource1: AbstractJdbcConfiguration() {
     @Qualifier("dataSource1")
     override fun jdbcConverter(
         mappingContext: JdbcMappingContext,
-        @Qualifier("qualifierJdbcOperations") operations: NamedParameterJdbcOperations,
+        @Qualifier("dataSource1") operations: NamedParameterJdbcOperations,
         @Lazy relationResolver: RelationResolver,
         conversions: JdbcCustomConversions,
         @Qualifier("dataSource1") dialect: Dialect
@@ -73,7 +65,7 @@ class MyDataSource1: AbstractJdbcConfiguration() {
 
     @Bean
     @Qualifier("dataSource1")
-    override fun jdbcDialect(@Qualifier("qualifierJdbcOperations") operations: NamedParameterJdbcOperations): Dialect {
+    override fun jdbcDialect(@Qualifier("dataSource1") operations: NamedParameterJdbcOperations): Dialect {
         return super.jdbcDialect(operations)
     }
 
@@ -88,15 +80,9 @@ class MyDataSource1: AbstractJdbcConfiguration() {
         return populator
     }
 
-    @Bean("ds1transactionManager")
-    fun ds1transactionManager(@Qualifier("dataSource1") dataSource: DataSource): PlatformTransactionManager {
+    @Bean("dataSource1TransactionManager")
+    fun transactionManager(@Qualifier("dataSource1") dataSource: DataSource): PlatformTransactionManager {
         return DataSourceTransactionManager(dataSource)
-    }
-
-    @Bean
-    @Qualifier("dataSource1")
-    fun namedParameterJdbcTemplate(@Qualifier("dataSource1") dataSource: DataSource): NamedParameterJdbcOperations {
-        return NamedParameterJdbcTemplate(dataSource)
     }
 
     @Bean
@@ -110,9 +96,14 @@ class MyDataSource1: AbstractJdbcConfiguration() {
             .build()
     }
 
-    @Bean(name = ["qualifierJdbcOperations"])
-    @Qualifier("qualifierJdbcOperations")
+//    class Ds1NamedParameterJdbcTemplateConfiguration:
+//        org.springframework.boot.autoconfigure.jdbc.NamedParameterJdbcTemplateConfiguration {
+//    }
+
+    @Bean(name = ["dataSource1JdbcOperations"])
+    @Qualifier("dataSource1")
     fun ds1JdbcOperations(@Qualifier("dataSource1") sqlServerDs: DataSource): NamedParameterJdbcOperations {
+        // todo: check it
         return NamedParameterJdbcTemplate(sqlServerDs)
     }
 
