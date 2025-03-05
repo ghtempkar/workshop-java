@@ -9,7 +9,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.FilterType
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Lazy
 import org.springframework.core.io.ClassPathResource
@@ -18,6 +20,7 @@ import org.springframework.data.jdbc.core.convert.JdbcConverter
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions
 import org.springframework.data.jdbc.core.convert.RelationResolver
 import org.springframework.data.jdbc.core.mapping.JdbcMappingContext
+import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 import org.springframework.data.relational.core.dialect.Dialect
 import org.springframework.jdbc.core.JdbcTemplate
@@ -28,8 +31,22 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.TransactionManager
 
+//@Configuration
+//class MyJdbcConfig : org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration() {
+//
+//
+//}
+
 @Configuration
-class MyJdbcConfig : org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration() {
+@EnableJdbcRepositories(
+    includeFilters = [ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = [Source1Repo::class])],
+//    basePackageClasses = [MyEntity1::class],
+    jdbcOperationsRef = "qualifierJdbcOperations",
+    dataAccessStrategyRef = "dataSource1DataAccessStrategy",
+    transactionManagerRef = "ds1transactionManager",
+
+)
+class MyDataSource1: AbstractJdbcConfiguration() {
 
     @Bean("dataSource1DataAccessStrategy")
     @Qualifier("dataSource1")
@@ -59,18 +76,9 @@ class MyJdbcConfig : org.springframework.data.jdbc.repository.config.AbstractJdb
     override fun jdbcDialect(@Qualifier("qualifierJdbcOperations") operations: NamedParameterJdbcOperations): Dialect {
         return super.jdbcDialect(operations)
     }
-}
 
-@Configuration
-@EnableJdbcRepositories(
-    basePackageClasses = [MyEntity1::class],
-//    basePackages = ["my.w250305s2.source1"],
-    jdbcOperationsRef = "qualifierJdbcOperations",
-    dataAccessStrategyRef = "dataSource1DataAccessStrategy",
-    transactionManagerRef = "ds1transactionManager",
 
-)
-class MyDataSource1 {
+
 
     @Bean
     fun initializeDatabase1(@Qualifier("dataSource1") dataSource: DataSource): ResourceDatabasePopulator {
@@ -147,7 +155,7 @@ class MyConfig {
 
 @SpringBootApplication
 @Import(
-    MyJdbcConfig::class,
+//    MyJdbcConfig::class,
     MyConfig::class,
 )
 class W250305s2Application
