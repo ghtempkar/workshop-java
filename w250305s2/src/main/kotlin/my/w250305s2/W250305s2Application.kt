@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Lazy
+import org.springframework.core.io.ClassPathResource
 import org.springframework.data.jdbc.core.convert.DataAccessStrategy
 import org.springframework.data.jdbc.core.convert.JdbcConverter
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions
@@ -21,6 +22,7 @@ import org.springframework.data.relational.core.dialect.Dialect
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator
 
 @Configuration
 class MyJdbcConfig : org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration() {
@@ -64,6 +66,16 @@ class MyJdbcConfig : org.springframework.data.jdbc.repository.config.AbstractJdb
 
 )
 class MyDataSource1 {
+
+    @Bean
+    fun initializeDatabase1(@Qualifier("dataSource1") dataSource: DataSource): ResourceDatabasePopulator {
+        val populator = ResourceDatabasePopulator()
+        populator.addScript(ClassPathResource("ds1/schema.sql")) // Wczytuje plik schema.sql z katalogu resources
+        populator.execute(dataSource) // Wykonuje skrypt na podanym DataSource
+        return populator
+    }
+
+
 
     @Bean
     @Qualifier("dataSource1")
