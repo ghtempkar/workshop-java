@@ -3,10 +3,12 @@ package my.w250305s1
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.autoconfigure.data.jdbc.JdbcRepositoriesAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.annotation.Id
+import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.CrudRepository
@@ -46,6 +48,7 @@ class MyService(
 class MyConfig {
     @Bean
     fun init1(@Autowired myService: MyService) = CommandLineRunner {
+//        JdbcRepositoriesAutoConfiguration.SpringBootJdbcConfiguration
         myService.run1()
     }
 }

@@ -18,7 +18,7 @@ data class MyEntity1(
     val symbol: String?,
 )
 
-//@Transactional
-@Repository
-@Qualifier("dataSource1")
-interface Source1Repo : CrudRepository<MyEntity1, Int>
+//@Transactional("dataSource1TransactionManager")
+//@Repository
+//@Qualifier("dataSource1")
+interface Source1Repo   : CrudRepository<MyEntity1, Int>
